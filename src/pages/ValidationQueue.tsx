@@ -13,12 +13,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { AlertTriangle, CheckCircle, XCircle, Image, MapPin, Search } from "lucide-react";
-import { mockValidationQueue } from "@/data/mockPriceData";
+import { mockPriceEntries } from "@/data/mockPriceData";
+import { getAlertPrice } from "@/data/commodityMasterData";
 
-const validationQueue = mockValidationQueue.map(item => item.priceEntry);
+const validationQueue = mockPriceEntries.filter(entry => entry.thresholdBreached);
 
 export default function ValidationQueue() {
   const [selectedEntry, setSelectedEntry] = useState(validationQueue[0]);
+
+  const getYesterdayPrice = (commodityName: string, varietyName: string, gradeName: string) => {
+    return getAlertPrice(commodityName, varietyName, gradeName) || 0;
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -45,7 +50,7 @@ export default function ValidationQueue() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Pending Review</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-warning">23</div>
+            <div className="text-2xl font-bold text-warning">{validationQueue.length}</div>
             <p className="text-xs text-muted-foreground mt-1">Threshold breaches today</p>
           </CardContent>
         </Card>
@@ -91,54 +96,57 @@ export default function ValidationQueue() {
                   <TableHead>Reporter</TableHead>
                   <TableHead>Center</TableHead>
                   <TableHead>Commodity</TableHead>
-                  <TableHead className="text-right">Yesterday</TableHead>
-                  <TableHead className="text-right">Today</TableHead>
+                  <TableHead className="text-right">Alert Price</TableHead>
+                  <TableHead className="text-right">Entered</TableHead>
                   <TableHead className="text-right">Change %</TableHead>
                   <TableHead className="text-center">Proof</TableHead>
                   <TableHead className="text-center">Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {validationQueue.map((entry) => (
-                  <TableRow
-                    key={entry.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => setSelectedEntry(entry)}
-                  >
-                    <TableCell className="font-medium">{entry.reporter}</TableCell>
-                    <TableCell className="text-sm">{entry.center}</TableCell>
-                    <TableCell>{entry.commodity}</TableCell>
-                    <TableCell className="text-right">₹{entry.yesterdayPrice}</TableCell>
-                    <TableCell className="text-right font-medium">₹{entry.enteredPrice}</TableCell>
-                    <TableCell className="text-right">
-                      <Badge
-                        variant="outline"
-                        className={
-                          Math.abs(entry.change) > entry.threshold
-                            ? entry.change > 0
-                              ? "bg-warning/10 text-warning border-warning/30"
-                              : "bg-success/10 text-success border-success/30"
-                            : ""
-                        }
-                      >
-                        {entry.change > 0 ? "+" : ""}
-                        {entry.change.toFixed(1)}%
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {entry.hasProof ? (
-                        <Image className="h-4 w-4 text-success mx-auto" />
-                      ) : (
-                        <XCircle className="h-4 w-4 text-destructive mx-auto" />
-                      )}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">
-                        Pending
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {validationQueue.map((entry) => {
+                  const alertPrice = getYesterdayPrice(entry.commodityName, entry.varietyName, entry.gradeName);
+                  return (
+                    <TableRow
+                      key={entry.id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => setSelectedEntry(entry)}
+                    >
+                      <TableCell className="font-medium">{entry.reporterName}</TableCell>
+                      <TableCell className="text-sm">{entry.centerName}</TableCell>
+                      <TableCell>{entry.commodityName}</TableCell>
+                      <TableCell className="text-right">₹{alertPrice}</TableCell>
+                      <TableCell className="text-right font-medium">₹{entry.price}</TableCell>
+                      <TableCell className="text-right">
+                        <Badge
+                          variant="outline"
+                          className={
+                            entry.thresholdBreached
+                              ? (entry.priceDeviation || 0) > 0
+                                ? "bg-warning/10 text-warning border-warning/30"
+                                : "bg-success/10 text-success border-success/30"
+                              : ""
+                          }
+                        >
+                          {(entry.priceDeviation || 0) > 0 ? "+" : ""}
+                          {(entry.priceDeviation || 0).toFixed(1)}%
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {entry.photoUrl ? (
+                          <Image className="h-4 w-4 text-success mx-auto" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-destructive mx-auto" />
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">
+                          {entry.status === 'flagged' ? 'Pending' : entry.status}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </CardContent>
@@ -154,28 +162,31 @@ export default function ValidationQueue() {
           <CardContent className="space-y-4">
             <div>
               <div className="text-sm font-medium text-muted-foreground mb-1">Commodity</div>
-              <div className="text-lg font-bold">{selectedEntry.commodity}</div>
+              <div className="text-lg font-bold">{selectedEntry.commodityName}</div>
+              <div className="text-sm text-muted-foreground">{selectedEntry.varietyName} - {selectedEntry.gradeName}</div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <div className="text-sm text-muted-foreground">Yesterday</div>
-                <div className="text-xl font-bold">₹{selectedEntry.yesterdayPrice}</div>
+                <div className="text-sm text-muted-foreground">Alert Price</div>
+                <div className="text-xl font-bold">
+                  ₹{getYesterdayPrice(selectedEntry.commodityName, selectedEntry.varietyName, selectedEntry.gradeName)}
+                </div>
               </div>
               <div>
-                <div className="text-sm text-muted-foreground">Today</div>
-                <div className="text-xl font-bold text-warning">₹{selectedEntry.enteredPrice}</div>
+                <div className="text-sm text-muted-foreground">Entered Price</div>
+                <div className="text-xl font-bold text-warning">₹{selectedEntry.price}</div>
               </div>
             </div>
 
             <div className="p-3 bg-warning/10 rounded-lg border border-warning/30">
               <div className="text-sm font-medium text-warning">Price Change</div>
               <div className="text-2xl font-bold text-warning">
-                {selectedEntry.change > 0 ? "+" : ""}
-                {selectedEntry.change.toFixed(1)}%
+                {(selectedEntry.priceDeviation || 0) > 0 ? "+" : ""}
+                {(selectedEntry.priceDeviation || 0).toFixed(1)}%
               </div>
               <div className="text-xs text-muted-foreground mt-1">
-                Threshold: ±{selectedEntry.threshold}%
+                Threshold: ±20%
               </div>
             </div>
 
@@ -193,7 +204,11 @@ export default function ValidationQueue() {
               </div>
               <div className="w-full h-24 bg-muted rounded-lg flex items-center justify-center">
                 <div className="text-sm text-center">
-                  <div className="font-mono text-xs">{selectedEntry.gps}</div>
+                  <div className="font-mono text-xs">
+                    {selectedEntry.gpsLatitude && selectedEntry.gpsLongitude 
+                      ? `${selectedEntry.gpsLatitude.toFixed(4)}° N, ${selectedEntry.gpsLongitude.toFixed(4)}° E`
+                      : 'GPS data not available'}
+                  </div>
                   <div className="text-muted-foreground text-xs mt-1">Map Preview</div>
                 </div>
               </div>
