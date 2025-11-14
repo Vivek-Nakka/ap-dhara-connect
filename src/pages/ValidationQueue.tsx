@@ -13,48 +13,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { AlertTriangle, CheckCircle, XCircle, Image, MapPin, Search } from "lucide-react";
+import { mockValidationQueue } from "@/data/mockPriceData";
 
-const validationQueue = [
-  {
-    id: 1,
-    reporter: "K. Ramesh",
-    center: "Guntur Market Center",
-    commodity: "Tomato",
-    yesterdayPrice: 32,
-    enteredPrice: 42,
-    change: 31.25,
-    threshold: 15,
-    hasProof: true,
-    gps: "16.3067° N, 80.4365° E",
-    remarks: "Sudden supply shortage due to transport strike",
-  },
-  {
-    id: 2,
-    reporter: "M. Lakshmi",
-    center: "Tenali Center",
-    commodity: "Onion",
-    yesterdayPrice: 28,
-    enteredPrice: 35,
-    change: 25.0,
-    threshold: 15,
-    hasProof: true,
-    gps: "16.2431° N, 80.6482° E",
-    remarks: "Festival demand surge",
-  },
-  {
-    id: 3,
-    reporter: "P. Srinivas",
-    center: "Narasaraopet",
-    commodity: "Rice (Sona Masoori)",
-    yesterdayPrice: 45,
-    enteredPrice: 38,
-    change: -15.56,
-    threshold: 15,
-    hasProof: true,
-    gps: "16.2350° N, 79.9951° E",
-    remarks: "New stock arrival from harvest",
-  },
-];
+const validationQueue = mockValidationQueue.map(item => item.priceEntry);
 
 export default function ValidationQueue() {
   const [selectedEntry, setSelectedEntry] = useState(validationQueue[0]);

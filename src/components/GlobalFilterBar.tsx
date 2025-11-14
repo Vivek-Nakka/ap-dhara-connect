@@ -5,12 +5,14 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { useState } from "react";
 import { format } from "date-fns";
+import { useMasterData } from "@/hooks/useMasterData";
 
 export function GlobalFilterBar() {
   const [language, setLanguage] = useState("en");
   const [dateRange, setDateRange] = useState<{ from: Date; to?: Date }>({
     from: new Date(),
   });
+  const { districts, commodityGroups } = useMasterData();
 
   return (
     <div className="h-14 border-b bg-card px-4 flex items-center justify-between gap-4">
@@ -50,12 +52,11 @@ export function GlobalFilterBar() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Districts</SelectItem>
-            <SelectItem value="visakhapatnam">Visakhapatnam</SelectItem>
-            <SelectItem value="vijayawada">Vijayawada</SelectItem>
-            <SelectItem value="guntur">Guntur</SelectItem>
-            <SelectItem value="nellore">Nellore</SelectItem>
-            <SelectItem value="kurnool">Kurnool</SelectItem>
-            <SelectItem value="tirupati">Tirupati</SelectItem>
+            {districts.map((district) => (
+              <SelectItem key={district} value={district.toLowerCase().replace(/ /g, "-")}>
+                {district}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
 
@@ -77,11 +78,11 @@ export function GlobalFilterBar() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
-            <SelectItem value="cereals">Cereals</SelectItem>
-            <SelectItem value="pulses">Pulses</SelectItem>
-            <SelectItem value="vegetables">Vegetables</SelectItem>
-            <SelectItem value="oils">Oils & Fats</SelectItem>
-            <SelectItem value="fruits">Fruits</SelectItem>
+            {commodityGroups.map((group) => (
+              <SelectItem key={group} value={group.toLowerCase().replace(/ /g, "-")}>
+                {group}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
