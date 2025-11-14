@@ -163,9 +163,11 @@ export default function InterventionPlanner() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="tomato">Tomato</SelectItem>
-                  <SelectItem value="onion">Onion</SelectItem>
+                  <SelectItem value="onion">Onions</SelectItem>
                   <SelectItem value="potato">Potato</SelectItem>
                   <SelectItem value="rice">Rice</SelectItem>
+                  <SelectItem value="groundnut-oil">Ground Nut Oil</SelectItem>
+                  <SelectItem value="redgram-dal">Redgram Dal</SelectItem>
                 </SelectContent>
               </Select>
             </div>
