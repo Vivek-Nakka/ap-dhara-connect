@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/table";
 import { TrendingUp, TrendingDown, Download, Calendar } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { useMasterData } from "@/hooks/useMasterData";
+import { useState } from "react";
 
 const trendData = [
   { date: "Dec 1", district: 42, state: 40, center: 43 },
@@ -40,201 +42,208 @@ const commodityComparison = [
 ];
 
 export default function PriceTrends() {
+  const { commodities, districts, centers } = useMasterData();
+  const [selectedCommodity, setSelectedCommodity] = useState<string>("Tomato");
+  const [selectedCenter, setSelectedCenter] = useState<string>("all");
+  const [selectedDistrict, setSelectedDistrict] = useState<string>("all");
+  const [timeRange, setTimeRange] = useState<string>("7days");
+
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Commodity Price Trend Explorer</h1>
-          <p className="text-muted-foreground">Time-series analysis and price movement patterns</p>
+          <h1 className="text-2xl font-bold text-foreground">Price Trend Analysis</h1>
+          <p className="text-sm text-muted-foreground">Commodity → Center → District hierarchy</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm">
             <Download className="mr-2 h-4 w-4" />
-            Export CSV
+            CSV
           </Button>
           <Button variant="outline" size="sm">
             <Download className="mr-2 h-4 w-4" />
-            Export PDF
+            PDF
           </Button>
           <Button size="sm">
             <Calendar className="mr-2 h-4 w-4" />
-            Schedule Report
+            Schedule
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">7-Day Average</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₹44.14</div>
-            <p className="text-xs text-success mt-1 flex items-center gap-1">
+      {/* Filters Row - Commodity First */}
+      <div className="grid grid-cols-4 gap-3">
+        <Select value={selectedCommodity} onValueChange={setSelectedCommodity}>
+          <SelectTrigger className="h-9">
+            <SelectValue placeholder="Select Commodity" />
+          </SelectTrigger>
+          <SelectContent>
+            {commodities.map((commodity) => (
+              <SelectItem key={commodity} value={commodity}>
+                {commodity}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={selectedCenter} onValueChange={setSelectedCenter}>
+          <SelectTrigger className="h-9">
+            <SelectValue placeholder="Select Center" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Centers</SelectItem>
+            {centers.map((center) => (
+              <SelectItem key={center} value={center}>
+                {center}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={selectedDistrict} onValueChange={setSelectedDistrict}>
+          <SelectTrigger className="h-9">
+            <SelectValue placeholder="Select District" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Districts</SelectItem>
+            {districts.map((district) => (
+              <SelectItem key={district} value={district}>
+                {district}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select value={timeRange} onValueChange={setTimeRange}>
+          <SelectTrigger className="h-9">
+            <SelectValue placeholder="Time Range" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="7days">Last 7 Days</SelectItem>
+            <SelectItem value="30days">Last 30 Days</SelectItem>
+            <SelectItem value="90days">Last 90 Days</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Compact KPIs */}
+      <div className="grid grid-cols-4 gap-3">
+        <Card className="shadow-sm">
+          <CardContent className="p-3">
+            <div className="text-xs text-muted-foreground mb-1">7-Day Avg</div>
+            <div className="text-xl font-bold">₹44.14</div>
+            <p className="text-xs text-success mt-0.5 flex items-center gap-1">
               <TrendingUp className="h-3 w-3" />
-              +5.2% from last week
+              +5.2%
             </p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Peak Price</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₹49</div>
-            <p className="text-xs text-muted-foreground mt-1">On Dec 6, 2024</p>
+        <Card className="shadow-sm">
+          <CardContent className="p-3">
+            <div className="text-xs text-muted-foreground mb-1">Peak Price</div>
+            <div className="text-xl font-bold">₹49</div>
+            <p className="text-xs text-muted-foreground mt-0.5">Dec 6</p>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Lowest Price</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₹40</div>
-            <p className="text-xs text-muted-foreground mt-1">On Dec 1, 2024</p>
+        <Card className="shadow-sm">
+          <CardContent className="p-3">
+            <div className="text-xs text-muted-foreground mb-1">Lowest Price</div>
+            <div className="text-xl font-bold">₹40</div>
+            <p className="text-xs text-muted-foreground mt-0.5">Dec 1</p>
           </CardContent>
         </Card>
-        <Card className="border-warning/30 bg-warning/5">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Volatility Index</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-warning">6.8</div>
-            <p className="text-xs text-muted-foreground mt-1">Medium volatility</p>
+        <Card className="border-warning/30 bg-warning/5 shadow-sm">
+          <CardContent className="p-3">
+            <div className="text-xs text-muted-foreground mb-1">Volatility</div>
+            <div className="text-xl font-bold">High</div>
+            <p className="text-xs text-warning mt-0.5">22.5%</p>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Price Trend Analysis</CardTitle>
-            <div className="flex items-center gap-2">
-              <Select defaultValue="tomato">
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select commodity" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="tomato">Tomato</SelectItem>
-                  <SelectItem value="onion">Onion</SelectItem>
-                  <SelectItem value="potato">Potato</SelectItem>
-                  <SelectItem value="rice">Rice</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select defaultValue="daily">
-                <SelectTrigger className="w-[120px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="daily">Daily</SelectItem>
-                  <SelectItem value="weekly">Weekly</SelectItem>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+      {/* Compact Chart */}
+      <Card className="shadow-sm">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Price Trend: {selectedCommodity}</CardTitle>
+          <p className="text-xs text-muted-foreground">Center → District → State comparison</p>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={350}>
-            <LineChart data={trendData}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-              <YAxis tick={{ fontSize: 12 }} />
-              <Tooltip />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="district"
-                stroke="hsl(var(--chart-1))"
-                strokeWidth={2}
-                name="District Avg (Guntur)"
-              />
-              <Line
-                type="monotone"
-                dataKey="state"
-                stroke="hsl(var(--chart-2))"
-                strokeWidth={2}
-                name="State Avg (AP)"
-              />
-              <Line
-                type="monotone"
-                dataKey="center"
-                stroke="hsl(var(--chart-3))"
-                strokeWidth={2}
-                strokeDasharray="5 5"
-                name="Center (Guntur Market)"
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          <div className="h-[240px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={trendData}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis dataKey="date" className="text-xs" tick={{ fontSize: 11 }} />
+                <YAxis className="text-xs" tick={{ fontSize: 11 }} label={{ value: '₹/kg', angle: -90, position: 'insideLeft', style: { fontSize: 11 } }} />
+                <Tooltip contentStyle={{ fontSize: 12 }} />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Line type="monotone" dataKey="center" stroke="hsl(var(--primary))" strokeWidth={2} name="Center" dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="district" stroke="hsl(var(--secondary))" strokeWidth={2} name="District" dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="state" stroke="hsl(var(--accent))" strokeWidth={2} name="State" dot={{ r: 3 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Price Movement Comparison</CardTitle>
+      {/* Compact Comparison Table */}
+      <Card className="shadow-sm">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Day-over-Day Comparison</CardTitle>
+          <p className="text-xs text-muted-foreground">Price changes and volatility</p>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Commodity</TableHead>
-                <TableHead className="text-right">Yesterday Price</TableHead>
-                <TableHead className="text-right">Today Price</TableHead>
-                <TableHead className="text-right">Change %</TableHead>
-                <TableHead>Volatility</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {commodityComparison.map((item, i) => (
-                <TableRow key={i}>
-                  <TableCell className="font-medium">{item.commodity}</TableCell>
-                  <TableCell className="text-right">₹{item.yesterday}</TableCell>
-                  <TableCell className="text-right font-medium">₹{item.today}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      {item.change > 0 ? (
-                        <TrendingUp className="h-3 w-3 text-warning" />
-                      ) : item.change < 0 ? (
-                        <TrendingDown className="h-3 w-3 text-success" />
-                      ) : null}
-                      <span
-                        className={
-                          item.change > 0
-                            ? "text-warning font-medium"
-                            : item.change < 0
-                            ? "text-success font-medium"
-                            : "text-muted-foreground"
-                        }
-                      >
-                        {item.change > 0 ? "+" : ""}
-                        {item.change.toFixed(2)}%
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={
-                        item.volatility === "High"
-                          ? "bg-destructive/10 text-destructive border-destructive/30"
-                          : item.volatility === "Medium"
-                          ? "bg-warning/10 text-warning border-warning/30"
-                          : "bg-success/10 text-success border-success/30"
-                      }
-                    >
-                      {item.volatility}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm">
-                      View Details
-                    </Button>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="text-xs">
+                  <TableHead className="h-8">Commodity</TableHead>
+                  <TableHead className="text-right h-8">Yesterday</TableHead>
+                  <TableHead className="text-right h-8">Today</TableHead>
+                  <TableHead className="text-right h-8">Change %</TableHead>
+                  <TableHead className="h-8">Volatility</TableHead>
+                  <TableHead className="text-right h-8">Action</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {commodityComparison.map((item) => (
+                  <TableRow key={item.commodity} className="text-xs">
+                    <TableCell className="font-medium py-2">{item.commodity}</TableCell>
+                    <TableCell className="text-right py-2">₹{item.yesterday}</TableCell>
+                    <TableCell className="text-right font-semibold py-2">₹{item.today}</TableCell>
+                    <TableCell className="text-right py-2">
+                      <div className={`flex items-center justify-end gap-1 ${
+                        item.change > 0 ? 'text-success' : item.change < 0 ? 'text-destructive' : 'text-muted-foreground'
+                      }`}>
+                        {item.change > 0 ? (
+                          <TrendingUp className="h-3 w-3" />
+                        ) : item.change < 0 ? (
+                          <TrendingDown className="h-3 w-3" />
+                        ) : null}
+                        {Math.abs(item.change).toFixed(2)}%
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-2">
+                      <Badge 
+                        variant={
+                          item.volatility === "High" ? "destructive" : 
+                          item.volatility === "Medium" ? "secondary" : 
+                          "outline"
+                        }
+                        className="text-xs px-2 py-0"
+                      >
+                        {item.volatility}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right py-2">
+                      <Button variant="outline" size="sm" className="h-7 text-xs px-2">
+                        Details
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>
