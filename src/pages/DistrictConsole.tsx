@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Bell, Eye, CheckCircle, Search, MapPin, Clock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const centers = [
   {
@@ -76,6 +77,8 @@ const centers = [
 ];
 
 export default function DistrictConsole() {
+  const navigate = useNavigate();
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -216,7 +219,12 @@ export default function DistrictConsole() {
                   <TableCell className="text-sm text-muted-foreground">{center.lastUpdate}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
-                      <Button variant="ghost" size="sm" className="h-8">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-8"
+                        onClick={() => navigate('/validation-queue')}
+                      >
                         <Eye className="h-3.5 w-3.5" />
                       </Button>
                       {center.pending > 0 && (

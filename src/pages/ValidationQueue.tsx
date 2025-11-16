@@ -12,14 +12,25 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { AlertTriangle, CheckCircle, XCircle, Image, MapPin, Search } from "lucide-react";
+import { AlertTriangle, CheckCircle, XCircle, Image, MapPin, Search, TrendingUp } from "lucide-react";
 import { mockPriceEntries } from "@/data/mockPriceData";
 import { getAlertPrice } from "@/data/commodityMasterData";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const validationQueue = mockPriceEntries.filter(entry => entry.thresholdBreached);
 
 export default function ValidationQueue() {
+  const navigate = useNavigate();
   const [selectedEntry, setSelectedEntry] = useState(validationQueue[0]);
+
+  const handleApprove = () => {
+    toast.success("Entry approved successfully");
+  };
+
+  const handleReject = () => {
+    toast.error("Entry rejected");
+  };
 
   const getYesterdayPrice = (commodityName: string, varietyName: string, gradeName: string) => {
     return getAlertPrice(commodityName, varietyName, gradeName) || 0;
@@ -225,15 +236,30 @@ export default function ValidationQueue() {
             </div>
 
             <div className="flex gap-2 pt-2">
-              <Button className="flex-1 bg-success hover:bg-success/90">
+              <Button 
+                className="flex-1 bg-success hover:bg-success/90"
+                onClick={handleApprove}
+              >
                 <CheckCircle className="mr-2 h-4 w-4" />
                 Approve
               </Button>
-              <Button variant="destructive" className="flex-1">
+              <Button 
+                variant="destructive" 
+                className="flex-1"
+                onClick={handleReject}
+              >
                 <XCircle className="mr-2 h-4 w-4" />
                 Reject
               </Button>
             </div>
+            <Button 
+              variant="outline" 
+              className="w-full mt-2"
+              onClick={() => navigate('/price-trends')}
+            >
+              <TrendingUp className="mr-2 h-4 w-4" />
+              View Price Trends
+            </Button>
           </CardContent>
         </Card>
       </div>

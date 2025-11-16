@@ -1,7 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, AlertCircle, Info, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle, AlertCircle, Info, Clock, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const alerts = [
   {
@@ -43,6 +45,8 @@ const alerts = [
 ];
 
 export function AlertsFeed() {
+  const navigate = useNavigate();
+
   const getSeverityIcon = (severity: string) => {
     switch (severity) {
       case "high":
@@ -78,25 +82,31 @@ export function AlertsFeed() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5" />
-            Recent Alerts
-          </span>
-          <Badge variant="outline" className="text-xs">
-            {alerts.filter((a) => a.severity === "high").length} Critical
-          </Badge>
-        </CardTitle>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base">Real-Time Alerts</CardTitle>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => navigate('/validation-queue')}
+          >
+            View All
+            <ArrowRight className="ml-1 h-3 w-3" />
+          </Button>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-3 max-h-[500px] overflow-y-auto">
-        {alerts.map((alert, index) => (
-          <Alert key={index} className={`${getSeverityColor(alert.severity)} transition-colors`}>
-            <div className="flex items-start gap-3">
+      <CardContent className="space-y-2 max-h-[400px] overflow-y-auto">
+        {alerts.slice(0, 4).map((alert, index) => (
+          <Alert 
+            key={index} 
+            className={`${getSeverityColor(alert.severity)} transition-colors cursor-pointer hover:shadow-sm`}
+            onClick={() => navigate('/validation-queue')}
+          >
+            <div className="flex items-start gap-2">
               <div className={`mt-0.5 ${alert.severity === "high" ? "text-destructive" : alert.severity === "medium" ? "text-warning" : "text-muted-foreground"}`}>
                 {getSeverityIcon(alert.severity)}
               </div>
-              <div className="flex-1 space-y-1">
+              <div className="flex-1 space-y-0.5">
                 <div className="flex items-center justify-between gap-2">
                   <Badge variant={getSeverityVariant(alert.severity)} className="text-xs">
                     {alert.category}
@@ -106,7 +116,7 @@ export function AlertsFeed() {
                     {alert.time}
                   </span>
                 </div>
-                <AlertDescription className="text-sm">
+                <AlertDescription className="text-xs line-clamp-2">
                   {alert.message}
                 </AlertDescription>
               </div>

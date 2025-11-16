@@ -2,7 +2,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { ShieldAlert, TrendingUp, Lightbulb, CheckCircle, Clock, AlertTriangle } from "lucide-react";
+import { ShieldAlert, TrendingUp, Lightbulb, CheckCircle, Clock, AlertTriangle, MapPin } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
+const districtRiskData = [
+  { name: "Guntur", risk: "high", commodities: ["Tomato", "Onion"], forecast: "+22%" },
+  { name: "Kurnool", risk: "high", commodities: ["Onion"], forecast: "+18%" },
+  { name: "Krishna", risk: "medium", commodities: ["Potato"], forecast: "+12%" },
+  { name: "Visakhapatnam", risk: "normal", commodities: [], forecast: "+2%" },
+  { name: "Vijayawada", risk: "medium", commodities: ["Tomato"], forecast: "+8%" },
+];
 
 const interventions = [
   {
@@ -59,6 +68,8 @@ const aiSuggestions = [
 ];
 
 export default function MarketIntervention() {
+  const navigate = useNavigate();
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -66,7 +77,7 @@ export default function MarketIntervention() {
           <h1 className="text-3xl font-bold text-foreground">Market Intervention Overview</h1>
           <p className="text-muted-foreground">Risk monitoring and intervention management</p>
         </div>
-        <Button>
+        <Button onClick={() => navigate('/intervention-planner')}>
           <ShieldAlert className="mr-2 h-4 w-4" />
           Plan New Intervention
         </Button>
@@ -110,6 +121,59 @@ export default function MarketIntervention() {
           </CardContent>
         </Card>
       </div>
+
+      {/* District Risk Map */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MapPin className="h-5 w-5" />
+            District Risk Map - Andhra Pradesh
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {districtRiskData.map((district) => (
+              <Card 
+                key={district.name}
+                className={`cursor-pointer transition-all hover:shadow-lg ${
+                  district.risk === 'high' 
+                    ? 'border-destructive/50 bg-destructive/5' 
+                    : district.risk === 'medium'
+                    ? 'border-warning/50 bg-warning/5'
+                    : 'border-success/50 bg-success/5'
+                }`}
+                onClick={() => navigate('/forecast-insights')}
+              >
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">{district.name}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Badge 
+                    variant={
+                      district.risk === 'high' 
+                        ? 'destructive' 
+                        : district.risk === 'medium'
+                        ? 'default'
+                        : 'outline'
+                    }
+                    className="text-xs"
+                  >
+                    {district.risk.toUpperCase()}
+                  </Badge>
+                  <div className="text-xs text-muted-foreground">
+                    Forecast: {district.forecast}
+                  </div>
+                  {district.commodities.length > 0 && (
+                    <div className="text-xs font-medium">
+                      {district.commodities.join(", ")}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
@@ -163,10 +227,19 @@ export default function MarketIntervention() {
                 <div className="text-sm font-medium mb-2">{suggestion.action}</div>
                 <div className="text-xs text-muted-foreground mb-3">{suggestion.rationale}</div>
                 <div className="flex gap-2">
-                  <Button size="sm" className="flex-1">
+                  <Button 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => navigate('/intervention-planner')}
+                  >
                     Accept
                   </Button>
-                  <Button size="sm" variant="outline" className="flex-1">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => navigate('/intervention-planner')}
+                  >
                     Review
                   </Button>
                   <Button size="sm" variant="ghost">

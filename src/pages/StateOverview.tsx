@@ -11,7 +11,9 @@ import {
   FileCheck,
   BarChart3,
   Download,
+  TrendingUp,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const kpiData = [
   {
@@ -49,8 +51,10 @@ const kpiData = [
 ];
 
 export default function StateOverview() {
+  const navigate = useNavigate();
+
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -60,6 +64,14 @@ export default function StateOverview() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => navigate('/price-trends')}
+          >
+            <TrendingUp className="mr-2 h-4 w-4" />
+            View Trends
+          </Button>
           <Button variant="outline" size="sm">
             <Download className="mr-2 h-4 w-4" />
             Export Report
@@ -71,24 +83,26 @@ export default function StateOverview() {
         </div>
       </div>
 
-      {/* KPI Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* KPI Row - Compact */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         {kpiData.map((kpi) => (
           <KPICard key={kpi.title} {...kpi} />
         ))}
       </div>
 
-      {/* Andhra Pradesh Heat Map */}
-      <APHeatMap />
-
-      {/* Reporting Completeness & Price Movers */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ReportingCompletenessChart />
-        <PriceMoversCards />
+      {/* Price Trends Focus - Top Priority */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2">
+          <PriceMoversCards />
+        </div>
+        <AlertsFeed />
       </div>
 
-      {/* Alerts Feed */}
-      <AlertsFeed />
+      {/* Andhra Pradesh Heat Map - Compact */}
+      <APHeatMap />
+
+      {/* Reporting Completeness - Compact */}
+      <ReportingCompletenessChart />
     </div>
   );
 }
