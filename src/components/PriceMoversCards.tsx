@@ -1,15 +1,15 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, MapPin, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { TrendingUp, TrendingDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 const topMovers = [
-  { commodity: "Tomato", district: "Guntur", change: "+18.5%", price: "₹42/kg", status: "up", changeValue: 18.5 },
-  { commodity: "Onion", district: "Kurnool", change: "+12.3%", price: "₹35/kg", status: "up", changeValue: 12.3 },
-  { commodity: "Potato", district: "Anantapur", change: "+9.7%", price: "₹28/kg", status: "up", changeValue: 9.7 },
-  { commodity: "Rice", district: "Krishna", change: "-8.2%", price: "₹38/kg", status: "down", changeValue: -8.2 },
-  { commodity: "Dal (Toor)", district: "Visakhapatnam", change: "-5.4%", price: "₹98/kg", status: "down", changeValue: -5.4 },
+  { commodity: "Tomato", previousPrice: 32, currentPrice: 42, changePercent: 31.25, direction: "up" as const },
+  { commodity: "Onion", previousPrice: 28, currentPrice: 35, changePercent: 25.0, direction: "up" as const },
+  { commodity: "Potato", previousPrice: 24, currentPrice: 28, changePercent: 16.67, direction: "up" as const },
+  { commodity: "Rice (Sona Masoori)", previousPrice: 45, currentPrice: 38, changePercent: -15.56, direction: "down" as const },
+  { commodity: "Dal (Toor)", previousPrice: 98, currentPrice: 96, changePercent: -2.04, direction: "down" as const },
 ];
 
 export function PriceMoversCards() {
@@ -17,52 +17,56 @@ export function PriceMoversCards() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-base">Top Price Movers Today</CardTitle>
-        <Button 
-          variant="ghost" 
-          size="sm"
-          onClick={() => navigate('/price-trends')}
-        >
-          View All
-          <ArrowRight className="ml-1 h-3 w-3" />
-        </Button>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg">Top Price Movers Today</CardTitle>
+        <p className="text-xs text-muted-foreground">Significant price changes requiring attention</p>
       </CardHeader>
-      <CardContent className="space-y-2">
-        {topMovers.map((mover, index) => (
-          <div
-            key={index}
-            className="flex items-center justify-between p-2 rounded-lg border border-border hover:bg-accent/50 cursor-pointer transition-colors"
-            onClick={() => navigate('/price-trends')}
-          >
-            <div className="flex items-center gap-2">
-              <div className={`p-1.5 rounded-full ${mover.status === "up" ? "bg-success/10" : "bg-destructive/10"}`}>
-                {mover.status === "up" ? (
-                  <TrendingUp className="h-3.5 w-3.5 text-success" />
-                ) : (
-                  <TrendingDown className="h-3.5 w-3.5 text-destructive" />
-                )}
-              </div>
-              <div>
-                <div className="font-medium text-sm text-foreground">{mover.commodity}</div>
-                <div className="text-xs text-muted-foreground flex items-center gap-1">
-                  <MapPin className="h-2.5 w-2.5" />
-                  {mover.district}
+      <CardContent>
+        <div className="space-y-2">
+          {topMovers.map((mover, idx) => {
+            const absChange = Math.abs(mover.changePercent);
+            const thresholdType = absChange >= 30 ? "MTP" : absChange >= 15 ? "Warning" : null;
+            
+            return (
+              <div
+                key={idx}
+                className="flex items-center justify-between p-2 rounded-md hover:bg-accent/50 transition-colors cursor-pointer"
+                onClick={() => navigate('/price-trends')}
+              >
+                <div className="flex items-center gap-2">
+                  {mover.direction === "up" ? (
+                    <TrendingUp className="h-4 w-4 text-destructive" />
+                  ) : (
+                    <TrendingDown className="h-4 w-4 text-success" />
+                  )}
+                  <span className="text-sm font-medium">{mover.commodity}</span>
+                  {thresholdType && (
+                    <Badge 
+                      variant={thresholdType === "MTP" ? "destructive" : "outline"}
+                      className={cn(
+                        "text-xs px-1.5 py-0 h-5",
+                        thresholdType === "Warning" && "border-warning text-warning"
+                      )}
+                    >
+                      {thresholdType}
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">
+                    ₹{mover.previousPrice} → ₹{mover.currentPrice}
+                  </span>
+                  <Badge
+                    variant={mover.direction === "up" ? "destructive" : "default"}
+                    className="text-xs"
+                  >
+                    {mover.direction === "up" ? "+" : ""}{mover.changePercent.toFixed(2)}%
+                  </Badge>
                 </div>
               </div>
-            </div>
-            <div className="text-right">
-              <div className="text-sm font-bold text-foreground">{mover.price}</div>
-              <div
-                className={`text-xs font-semibold ${
-                  mover.status === "up" ? "text-success" : "text-destructive"
-                }`}
-              >
-                {mover.change}
-              </div>
-            </div>
-          </div>
-        ))}
+            );
+          })}
+        </div>
       </CardContent>
     </Card>
   );

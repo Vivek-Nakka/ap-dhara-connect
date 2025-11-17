@@ -63,7 +63,7 @@ export default function StateOverview() {
             Real-time price monitoring across Andhra Pradesh
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           <Button 
             variant="outline" 
             size="sm"
@@ -76,8 +76,8 @@ export default function StateOverview() {
             <Download className="mr-2 h-4 w-4" />
             Export Report
           </Button>
-          <Badge variant="outline" className="text-xs">
-            <Clock className="mr-1 h-3 w-3" />
+          <Badge variant="default" className="text-xs px-3 py-1.5 bg-warning text-warning-foreground">
+            <Clock className="mr-1.5 h-3.5 w-3.5" />
             Edit until 2 PM
           </Badge>
         </div>

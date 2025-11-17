@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -12,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { AlertTriangle, CheckCircle, XCircle, Image, MapPin, Search, TrendingUp } from "lucide-react";
+import { AlertTriangle, CheckCircle, XCircle, Image, MapPin, Search, TrendingUp, History } from "lucide-react";
 import { mockPriceEntries } from "@/data/mockPriceData";
 import { getAlertPrice } from "@/data/commodityMasterData";
 import { useNavigate } from "react-router-dom";
@@ -23,6 +25,7 @@ const validationQueue = mockPriceEntries.filter(entry => entry.thresholdBreached
 export default function ValidationQueue() {
   const navigate = useNavigate();
   const [selectedEntry, setSelectedEntry] = useState(validationQueue[0]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const handleApprove = () => {
     toast.success("Entry approved successfully");
@@ -30,6 +33,38 @@ export default function ValidationQueue() {
 
   const handleReject = () => {
     toast.error("Entry rejected");
+  };
+
+  const handleBulkApprove = () => {
+    if (selectedIds.length === 0) {
+      toast.error("Please select entries to approve");
+      return;
+    }
+    toast.success(`${selectedIds.length} entries approved successfully`);
+    setSelectedIds([]);
+  };
+
+  const handleBulkReject = () => {
+    if (selectedIds.length === 0) {
+      toast.error("Please select entries to reject");
+      return;
+    }
+    toast.error(`${selectedIds.length} entries rejected`);
+    setSelectedIds([]);
+  };
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === validationQueue.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(validationQueue.map(e => e.id));
+    }
   };
 
   const getYesterdayPrice = (commodityName: string, varietyName: string, gradeName: string) => {
@@ -44,13 +79,23 @@ export default function ValidationQueue() {
           <p className="text-muted-foreground">Review and approve price entries with threshold breaches</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleBulkApprove}
+            disabled={selectedIds.length === 0}
+          >
             <CheckCircle className="mr-2 h-4 w-4" />
-            Bulk Approve
+            Bulk Approve ({selectedIds.length})
           </Button>
-          <Button variant="outline" size="sm">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleBulkReject}
+            disabled={selectedIds.length === 0}
+          >
             <XCircle className="mr-2 h-4 w-4" />
-            Bulk Reject
+            Bulk Reject ({selectedIds.length})
           </Button>
         </div>
       </div>
@@ -104,6 +149,12 @@ export default function ValidationQueue() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[40px]">
+                    <Checkbox 
+                      checked={selectedIds.length === validationQueue.length}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead>Reporter</TableHead>
                   <TableHead>Center</TableHead>
                   <TableHead>Commodity</TableHead>
@@ -168,74 +219,122 @@ export default function ValidationQueue() {
             <CardTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-warning" />
               Entry Details
+              {!selectedEntry.photoUrl && (
+                <Badge variant="destructive" className="text-xs ml-2">Photo: Missing</Badge>
+              )}
+              {!selectedEntry.gpsLatitude && (
+                <Badge variant="destructive" className="text-xs ml-1">GPS: Missing</Badge>
+              )}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <div className="text-sm font-medium text-muted-foreground mb-1">Commodity</div>
-              <div className="text-lg font-bold">{selectedEntry.commodityName}</div>
-              <div className="text-sm text-muted-foreground">{selectedEntry.varietyName} - {selectedEntry.gradeName}</div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <div className="text-sm text-muted-foreground">Alert Price</div>
-                <div className="text-xl font-bold">
-                  ₹{getYesterdayPrice(selectedEntry.commodityName, selectedEntry.varietyName, selectedEntry.gradeName)}
+          <CardContent>
+            <Tabs defaultValue="details" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="details">Details</TabsTrigger>
+                <TabsTrigger value="audit">
+                  <History className="h-4 w-4 mr-2" />
+                  Audit Trail
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="details" className="space-y-4 mt-4">
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-1">Commodity</div>
+                  <div className="text-lg font-bold">{selectedEntry.commodityName}</div>
+                  <div className="text-sm text-muted-foreground">{selectedEntry.varietyName} - {selectedEntry.gradeName}</div>
                 </div>
-              </div>
-              <div>
-                <div className="text-sm text-muted-foreground">Entered Price</div>
-                <div className="text-xl font-bold text-warning">₹{selectedEntry.price}</div>
-              </div>
-            </div>
 
-            <div className="p-3 bg-warning/10 rounded-lg border border-warning/30">
-              <div className="text-sm font-medium text-warning">Price Change</div>
-              <div className="text-2xl font-bold text-warning">
-                {(selectedEntry.priceDeviation || 0) > 0 ? "+" : ""}
-                {(selectedEntry.priceDeviation || 0).toFixed(1)}%
-              </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                Threshold: ±20%
-              </div>
-            </div>
-
-            <div>
-              <div className="text-sm font-medium text-muted-foreground mb-2">Photo Proof</div>
-              <div className="w-full h-32 bg-muted rounded-lg flex items-center justify-center">
-                <Image className="h-12 w-12 text-muted-foreground" />
-              </div>
-            </div>
-
-            <div>
-              <div className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1">
-                <MapPin className="h-4 w-4" />
-                GPS Location
-              </div>
-              <div className="w-full h-24 bg-muted rounded-lg flex items-center justify-center">
-                <div className="text-sm text-center">
-                  <div className="font-mono text-xs">
-                    {selectedEntry.gpsLatitude && selectedEntry.gpsLongitude 
-                      ? `${selectedEntry.gpsLatitude.toFixed(4)}° N, ${selectedEntry.gpsLongitude.toFixed(4)}° E`
-                      : 'GPS data not available'}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <div className="text-sm text-muted-foreground">Alert Price</div>
+                    <div className="text-xl font-bold">
+                      ₹{getYesterdayPrice(selectedEntry.commodityName, selectedEntry.varietyName, selectedEntry.gradeName)}
+                    </div>
                   </div>
-                  <div className="text-muted-foreground text-xs mt-1">Map Preview</div>
+                  <div>
+                    <div className="text-sm text-muted-foreground">Entered Price</div>
+                    <div className="text-xl font-bold text-warning">₹{selectedEntry.price}</div>
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <div>
-              <div className="text-sm font-medium text-muted-foreground mb-2">Reporter's Remarks</div>
-              <Textarea
-                value={selectedEntry.remarks}
-                readOnly
-                className="resize-none"
-                rows={3}
-              />
-            </div>
+                <div className="p-3 bg-warning/10 rounded-lg border border-warning/30">
+                  <div className="text-sm font-medium text-warning">Price Change</div>
+                  <div className="text-2xl font-bold text-warning">
+                    {(selectedEntry.priceDeviation || 0) > 0 ? "+" : ""}
+                    {(selectedEntry.priceDeviation || 0).toFixed(1)}%
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Threshold: ±20%
+                  </div>
+                </div>
 
-            <div className="flex gap-2 pt-2">
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-2">Photo Proof</div>
+                  <div className="w-full h-32 bg-muted rounded-lg flex items-center justify-center">
+                    {selectedEntry.photoUrl ? (
+                      <Image className="h-12 w-12 text-success" />
+                    ) : (
+                      <div className="text-center">
+                        <Image className="h-12 w-12 text-destructive mx-auto mb-2" />
+                        <span className="text-xs text-destructive">Photo proof missing</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-1">
+                    <MapPin className="h-4 w-4" />
+                    GPS Location
+                  </div>
+                  <div className="w-full h-24 bg-muted rounded-lg flex items-center justify-center">
+                    <div className="text-sm text-center">
+                      <div className="font-mono text-xs">
+                        {selectedEntry.gpsLatitude && selectedEntry.gpsLongitude 
+                          ? `${selectedEntry.gpsLatitude.toFixed(4)}° N, ${selectedEntry.gpsLongitude.toFixed(4)}° E`
+                          : <span className="text-destructive">GPS data not available</span>}
+                      </div>
+                      <div className="text-muted-foreground text-xs mt-1">Map Preview</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-2">Reporter's Remarks</div>
+                  <Textarea
+                    value={selectedEntry.remarks}
+                    readOnly
+                    className="resize-none"
+                    rows={3}
+                  />
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="audit" className="space-y-3 mt-4">
+                <div className="p-3 border rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium">Entry Created</span>
+                    <span className="text-xs text-muted-foreground">{selectedEntry.timestamp}</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    by {selectedEntry.reporterName} • {selectedEntry.centerName}
+                  </div>
+                </div>
+                <div className="p-3 border rounded-lg bg-muted/20">
+                  <div className="text-sm font-medium mb-1">Pending Review</div>
+                  <div className="text-xs text-muted-foreground">
+                    Awaiting approval from state authority
+                  </div>
+                </div>
+                <div className="p-3 border-l-4 border-l-warning bg-warning/5 rounded-lg">
+                  <div className="text-xs font-medium text-warning mb-1">Threshold Breach Detected</div>
+                  <div className="text-xs text-muted-foreground">
+                    Price deviation of {(selectedEntry.priceDeviation || 0).toFixed(1)}% exceeds ±20% threshold
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+
+            <div className="flex gap-2 pt-4 mt-4 border-t">
               <Button 
                 className="flex-1 bg-success hover:bg-success/90"
                 onClick={handleApprove}
@@ -251,15 +350,14 @@ export default function ValidationQueue() {
                 <XCircle className="mr-2 h-4 w-4" />
                 Reject
               </Button>
+              <Button 
+                variant="outline"
+                onClick={() => navigate('/price-trends')}
+              >
+                <TrendingUp className="mr-2 h-4 w-4" />
+                View Trends
+              </Button>
             </div>
-            <Button 
-              variant="outline" 
-              className="w-full mt-2"
-              onClick={() => navigate('/price-trends')}
-            >
-              <TrendingUp className="mr-2 h-4 w-4" />
-              View Price Trends
-            </Button>
           </CardContent>
         </Card>
       </div>
