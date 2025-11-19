@@ -1,4 +1,5 @@
 import { NavLink } from "@/components/NavLink";
+import { useLocation } from "react-router-dom";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -16,6 +17,7 @@ import {
   LineChart,
   Calendar,
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 const priceMonitoringItems = [
   { title: "State Overview", url: "/", icon: LayoutDashboard },
@@ -31,13 +33,33 @@ const marketInterventionItems = [
 ];
 
 export function HeaderNav() {
+  const location = useLocation();
+  const currentModule = location.pathname.includes('market-intervention') || 
+                        location.pathname.includes('forecast-insights') || 
+                        location.pathname.includes('intervention-planner')
+                        ? 'Market Intervention'
+                        : 'Price Monitoring';
+
+  const getSubsection = () => {
+    const path = location.pathname;
+    if (path === '/') return 'State Overview';
+    if (path === '/district-console') return 'District Console';
+    if (path === '/validation-queue') return 'Validation Queue';
+    if (path === '/price-trends') return 'Price Trends';
+    if (path === '/market-intervention') return 'MI Overview';
+    if (path === '/forecast-insights') return 'Forecast Insights';
+    if (path === '/intervention-planner') return 'Intervention Planner';
+    return '';
+  };
+
   return (
-    <NavigationMenu>
-      <NavigationMenuList>
-        <NavigationMenuItem>
-          <NavigationMenuTrigger className="bg-primary text-primary-foreground hover:bg-primary/90">
-            Price Monitoring
-          </NavigationMenuTrigger>
+    <div className="flex items-center gap-4">
+      <NavigationMenu>
+        <NavigationMenuList>
+          <NavigationMenuItem>
+            <NavigationMenuTrigger className="bg-primary text-primary-foreground hover:bg-primary/90">
+              Price Monitoring
+            </NavigationMenuTrigger>
           <NavigationMenuContent>
             <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2">
               {priceMonitoringItems.map((item) => (
@@ -92,5 +114,15 @@ export function HeaderNav() {
         </NavigationMenuItem>
       </NavigationMenuList>
     </NavigationMenu>
+    {getSubsection() && (
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-accent/50 border border-border">
+        <span className="text-xs font-medium text-muted-foreground">{currentModule}</span>
+        <span className="text-xs text-muted-foreground">/</span>
+        <Badge variant="secondary" className="text-xs font-medium">
+          {getSubsection()}
+        </Badge>
+      </div>
+    )}
+  </div>
   );
 }

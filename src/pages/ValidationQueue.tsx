@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -14,11 +16,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { AlertTriangle, CheckCircle, XCircle, Image, MapPin, Search, TrendingUp, History } from "lucide-react";
+import { AlertTriangle, CheckCircle, XCircle, Image, MapPin, Search, TrendingUp, History, GitCompare } from "lucide-react";
 import { mockPriceEntries } from "@/data/mockPriceData";
 import { getAlertPrice } from "@/data/commodityMasterData";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { PriceEntry } from "@/types/masterData";
 
 const validationQueue = mockPriceEntries.filter(entry => entry.thresholdBreached);
 
@@ -26,6 +29,23 @@ export default function ValidationQueue() {
   const navigate = useNavigate();
   const [selectedEntry, setSelectedEntry] = useState(validationQueue[0]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [showDepartmentComparison, setShowDepartmentComparison] = useState(false);
+
+  // Find duplicate entries (same commodity, center, date but different departments)
+  const getDepartmentComparison = (entry: PriceEntry) => {
+    return mockPriceEntries.find(
+      (e) =>
+        e.id !== entry.id &&
+        e.commodityName === entry.commodityName &&
+        e.centerName === entry.centerName &&
+        e.date === entry.date &&
+        e.department !== entry.department
+    );
+  };
+
+  const hasComparableEntry = validationQueue.some((entry) => 
+    getDepartmentComparison(entry) !== undefined
+  );
 
   const handleApprove = () => {
     toast.success("Entry approved successfully");
@@ -78,7 +98,20 @@ export default function ValidationQueue() {
           <h1 className="text-3xl font-bold text-foreground">Data Validation & Remarks Queue</h1>
           <p className="text-muted-foreground">Review and approve price entries with threshold breaches</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-3 items-center">
+          {hasComparableEntry && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-card">
+              <GitCompare className="h-4 w-4 text-muted-foreground" />
+              <Label htmlFor="dept-compare" className="text-sm font-medium cursor-pointer">
+                Department Comparison
+              </Label>
+              <Switch
+                id="dept-compare"
+                checked={showDepartmentComparison}
+                onCheckedChange={setShowDepartmentComparison}
+              />
+            </div>
+          )}
           <Button 
             variant="outline" 
             size="sm"
@@ -155,6 +188,7 @@ export default function ValidationQueue() {
                       onCheckedChange={toggleSelectAll}
                     />
                   </TableHead>
+                  {showDepartmentComparison && <TableHead>Department</TableHead>}
                   <TableHead>Reporter</TableHead>
                   <TableHead>Center</TableHead>
                   <TableHead>Commodity</TableHead>
@@ -168,45 +202,121 @@ export default function ValidationQueue() {
               <TableBody>
                 {validationQueue.map((entry) => {
                   const alertPrice = getYesterdayPrice(entry.commodityName, entry.varietyName, entry.gradeName);
+                  const comparisonEntry = showDepartmentComparison ? getDepartmentComparison(entry) : undefined;
+                  const hasDivergence = comparisonEntry && Math.abs(entry.price - comparisonEntry.price) > 5;
+                  
                   return (
-                    <TableRow
-                      key={entry.id}
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => setSelectedEntry(entry)}
-                    >
-                      <TableCell className="font-medium">{entry.reporterName}</TableCell>
-                      <TableCell className="text-sm">{entry.centerName}</TableCell>
-                      <TableCell>{entry.commodityName}</TableCell>
-                      <TableCell className="text-right">₹{alertPrice}</TableCell>
-                      <TableCell className="text-right font-medium">₹{entry.price}</TableCell>
-                      <TableCell className="text-right">
-                        <Badge
-                          variant="outline"
-                          className={
-                            entry.thresholdBreached
-                              ? (entry.priceDeviation || 0) > 0
-                                ? "bg-warning/10 text-warning border-warning/30"
-                                : "bg-success/10 text-success border-success/30"
-                              : ""
-                          }
-                        >
-                          {(entry.priceDeviation || 0) > 0 ? "+" : ""}
-                          {(entry.priceDeviation || 0).toFixed(1)}%
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {entry.photoUrl ? (
-                          <Image className="h-4 w-4 text-success mx-auto" />
-                        ) : (
-                          <XCircle className="h-4 w-4 text-destructive mx-auto" />
+                    <>
+                      <TableRow
+                        key={entry.id}
+                        className={`cursor-pointer hover:bg-muted/50 ${hasDivergence ? 'border-l-4 border-l-warning' : ''}`}
+                        onClick={() => setSelectedEntry(entry)}
+                      >
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <Checkbox 
+                            checked={selectedIds.includes(entry.id)}
+                            onCheckedChange={() => toggleSelection(entry.id)}
+                          />
+                        </TableCell>
+                        {showDepartmentComparison && (
+                          <TableCell>
+                            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+                              {entry.department}
+                            </Badge>
+                          </TableCell>
                         )}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">
-                          {entry.status === 'flagged' ? 'Pending' : entry.status}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
+                        <TableCell className="font-medium">{entry.reporterName}</TableCell>
+                        <TableCell className="text-sm">{entry.centerName}</TableCell>
+                        <TableCell>{entry.commodityName}</TableCell>
+                        <TableCell className="text-right">₹{alertPrice}</TableCell>
+                        <TableCell className="text-right font-medium">₹{entry.price}</TableCell>
+                        <TableCell className="text-right">
+                          <Badge
+                            variant="outline"
+                            className={
+                              entry.thresholdBreached
+                                ? (entry.priceDeviation || 0) > 0
+                                  ? "bg-warning/10 text-warning border-warning/30"
+                                  : "bg-success/10 text-success border-success/30"
+                                : ""
+                            }
+                          >
+                            {(entry.priceDeviation || 0) > 0 ? "+" : ""}
+                            {(entry.priceDeviation || 0).toFixed(1)}%
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {entry.photoUrl ? (
+                            <Image className="h-4 w-4 text-success mx-auto" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-destructive mx-auto" />
+                          )}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">
+                            {entry.status === 'flagged' ? 'Pending' : entry.status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                      {showDepartmentComparison && comparisonEntry && (
+                        <TableRow
+                          key={`${entry.id}-compare`}
+                          className={`cursor-pointer hover:bg-muted/50 bg-muted/30 ${hasDivergence ? 'border-l-4 border-l-warning' : ''}`}
+                          onClick={() => setSelectedEntry(comparisonEntry)}
+                        >
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <Checkbox 
+                              checked={selectedIds.includes(comparisonEntry.id)}
+                              onCheckedChange={() => toggleSelection(comparisonEntry.id)}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="bg-secondary/10 text-secondary border-secondary/30">
+                              {comparisonEntry.department}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="font-medium">{comparisonEntry.reporterName}</TableCell>
+                          <TableCell className="text-sm">{comparisonEntry.centerName}</TableCell>
+                          <TableCell>{comparisonEntry.commodityName}</TableCell>
+                          <TableCell className="text-right">₹{alertPrice}</TableCell>
+                          <TableCell className="text-right font-medium">
+                            ₹{comparisonEntry.price}
+                            {hasDivergence && (
+                              <Badge variant="outline" className="ml-2 text-xs bg-warning/10 text-warning border-warning/30">
+                                Δ₹{Math.abs(entry.price - comparisonEntry.price).toFixed(0)}
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Badge
+                              variant="outline"
+                              className={
+                                comparisonEntry.thresholdBreached
+                                  ? (comparisonEntry.priceDeviation || 0) > 0
+                                    ? "bg-warning/10 text-warning border-warning/30"
+                                    : "bg-success/10 text-success border-success/30"
+                                  : ""
+                              }
+                            >
+                              {(comparisonEntry.priceDeviation || 0) > 0 ? "+" : ""}
+                              {(comparisonEntry.priceDeviation || 0).toFixed(1)}%
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {comparisonEntry.photoUrl ? (
+                              <Image className="h-4 w-4 text-success mx-auto" />
+                            ) : (
+                              <XCircle className="h-4 w-4 text-destructive mx-auto" />
+                            )}
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant="outline" className="bg-warning/10 text-warning border-warning/30">
+                              {comparisonEntry.status === 'flagged' ? 'Pending' : comparisonEntry.status}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </>
                   );
                 })}
               </TableBody>

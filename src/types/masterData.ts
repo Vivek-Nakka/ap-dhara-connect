@@ -38,6 +38,7 @@ export interface PriceEntry {
   unitOfMeasurement: string;
   reporterId: string;
   reporterName: string;
+  department: string;
   gpsLatitude?: number;
   gpsLongitude?: number;
   photoUrl?: string;
