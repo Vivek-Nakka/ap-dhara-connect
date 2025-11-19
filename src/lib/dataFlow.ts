@@ -44,6 +44,7 @@ export const processPriceEntry = (entry: Partial<PriceEntry>): PriceEntry => {
     unitOfMeasurement: entry.unitOfMeasurement || commodity?.unitOfMeasurement || "kg",
     reporterId: entry.reporterId || "",
     reporterName: entry.reporterName || "",
+    department: entry.department || "CIVIL",
     gpsLatitude: entry.gpsLatitude,
     gpsLongitude: entry.gpsLongitude,
     photoUrl: entry.photoUrl,
